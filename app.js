@@ -1327,6 +1327,120 @@ function setupEventListeners() {
       }
     }
   });
+
+  // Compare checkbox handlers
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('compare-checkbox')) {
+      e.stopPropagation();
+      const courseName = e.target.dataset.course;
+      
+      if (e.target.checked) {
+        const course = allCourses.find(c => c.name === courseName);
+        if (course && !selectedCourses.some(c => c.name === courseName)) {
+          selectedCourses.push(course);
+        }
+      } else {
+        selectedCourses = selectedCourses.filter(c => c.name !== courseName);
+      }
+      
+      updateCompareBar();
+    }
+  });
+
+  // Stop checkbox clicks from opening modal
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('compare-checkbox')) {
+      e.stopPropagation();
+    }
+  });
+
+  // Compare button
+  document.getElementById('compareBtn').addEventListener('click', () => {
+    if (selectedCourses.length >= 2) {
+      showComparison();
+    }
+  });
+
+  // Clear compare button
+  document.getElementById('clearCompareBtn').addEventListener('click', () => {
+    selectedCourses = [];
+    document.querySelectorAll('.compare-checkbox').forEach(cb => {
+      cb.checked = false;
+    });
+    updateCompareBar();
+  });
+}
+
+// Update compare bar
+function updateCompareBar() {
+  const compareBar = document.getElementById('compareBar');
+  const compareInfo = document.getElementById('compareInfo');
+  const compareBtn = document.getElementById('compareBtn');
+  
+  if (selectedCourses.length > 0) {
+    compareBar.classList.add('active');
+    compareInfo.textContent = `${selectedCourses.length} course${selectedCourses.length !== 1 ? 's' : ''} selected for comparison`;
+    
+    if (selectedCourses.length >= 2) {
+      compareBtn.disabled = false;
+      compareBtn.style.opacity = '1';
+    } else {
+      compareBtn.disabled = true;
+      compareBtn.style.opacity = '0.5';
+    }
+  } else {
+    compareBar.classList.remove('active');
+  }
+}
+
+// Show comparison modal
+function showComparison() {
+  const modal = document.getElementById('courseModal');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+  
+  title.textContent = 'Course Comparison';
+  
+  let comparisonHTML = '<div class="compare-grid">';
+  
+  selectedCourses.forEach(course => {
+    const formatBadges = course.format.map(f => {
+      const formatClass = f.toLowerCase().replace(/[^a-z]/g, '');
+      return `<span class="format-badge format-${formatClass}">${f}</span>`;
+    }).join('');
+    
+    comparisonHTML += `
+      <div class="compare-card">
+        <h3>${course.name}</h3>
+        <div class="detail-section">
+          <div class="detail-label">Target Audience</div>
+          <div class="detail-content">${course.target_audience}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Duration</div>
+          <div class="detail-content">${course.duration}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Format</div>
+          <div class="format-tags">${formatBadges}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Pricing</div>
+          <div class="detail-content">${course.pricing}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Accreditation</div>
+          <div class="detail-content">${course.accreditation}</div>
+        </div>
+      </div>
+    `;
+  });
+  
+  comparisonHTML += '</div>';
+  
+  body.innerHTML = comparisonHTML;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 // Initialize app when DOM is loaded
